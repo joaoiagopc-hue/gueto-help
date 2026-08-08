@@ -1,8 +1,10 @@
 const { EmbedBuilder } = require('discord.js');
+const path = require('path');
+const fs = require('fs');
 
 module.exports = {
-    // 🎙️ 1. O COMANDO MESTRE: !ia alimentado pelo motor da raiz!
-    async executeComandoIA(message, modeloGeminiMestre) {
+    // 🎙️ 1. O COMANDO MESTRE: !ia conectado ao nosso motor próprio google.js!
+    async executeComandoIA(message) {
         const textoCompleto = message.content;
         const perguntaMorador = textoCompleto.slice('!ia'.length).trim();
 
@@ -10,29 +12,33 @@ module.exports = {
             return message.reply({ content: '🙋‍♂️ **Olá! Eu sou a Inteligência Artificial oficial do Gueto RP.** Estou conectada diretamente à API do Gemini do Google! Pode me perguntar absolutamente qualquer coisa do universo digitando após o comando, ex: `!ia você é muito legal`' });
         }
 
-        if (!modeloGeminiMestre) {
-            return message.reply({ content: '⚠️ **Ih, deu uma travada na minha inicialização principal!** O motor do Gemini não está ativo. Verifique se o token `GEMINI_KEY` foi colocado corretamente nas configurações do Render.' });
-        }
-
         await message.channel.sendTyping().catch(() => null);
 
         try {
-            // 🧠 DIRETRIZ DE PERSONALIDADE: Puxa a resposta direto do motor pronto sem abrir conexões novas!
+            // Rota para ler o nosso arquivo próprio criado na raiz
+            const caminhoGoogleScript = path.join(__dirname, 'google.js');
+            if (!fs.existsSync(caminhoGoogleScript)) {
+                return message.reply({ content: '⚠️ **Erro interno:** O arquivo `google.js` não foi localizado na raiz do projeto.' });
+            }
+
+            const motorGoogleProprio = require(caminhoGoogleScript);
+
+            // Diretriz de personalidade oficial para trancar o comportamento do robô
             const promptSistema = 
                 `Você é a Inteligência Artificial oficial do servidor de Discord "Gueto RP". ` +
                 `Você deve responder de forma extremamente humana, amigável, acolhedora e usando gírias leves brasileiras de roleplay se achar adequado. ` +
                 `Você entende tudo e conversa sobre qualquer assunto do universo, agindo como um assistente magnífico, prestativo e inteligente. ` +
-                `Responda de forma direta e natural, sem formatações robóticas exageradas ou tópicos mecânicos. ` +
-                `Aqui está a mensagem do usuário: ${perguntaMorador}`;
+                `Responda de forma direta e natural, sem formatações robóticas exageradas ou tópicos mecânicos.`;
 
-            const resultadoAI = await modeloGeminiMestre.generateContent(promptSistema);
-            const respostaTextoHumano = resultadoAI.response.text();
+            // Executa a conversa chamando a nossa rota HTTP burladora de bloqueios
+            const respostaTextoHumano = await motorGoogleProprio.conversarComGemini(perguntaMorador, promptSistema);
 
+            // Retorna a resposta magnífica direto na tela do morador
             return message.reply({ content: `🙋‍♂️ **Gueto AI:** ${respostaTextoHumano}` });
 
         } catch (error) {
-            console.error('Erro na API do Gemini Google dentro do ajuda.js:', error);
-            return message.reply({ content: '⚠️ **Ih, deu uma travada na minha mente agora!** O servidor do Google recusou a requisição. Certifique-se de que a chave está ativa e sem restrições no Render.' });
+            console.error('Erro na rota própria do google.js:', error);
+            return message.reply({ content: '⚠️ **Ih, deu uma travada na minha mente agora!** O servidor do Google recusou a requisição HTTP. Certifique-se de que a nova chave está salva sem espaços no painel do Render.' });
         }
     },
 
