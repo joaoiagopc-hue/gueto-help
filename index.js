@@ -18,7 +18,6 @@ const client = new Client({
     ]
 });
 
-// Buscador Relâmpago na Raiz
 function carregarModuloSeguro(nomeArquivo) {
     const caminho = path.join(__dirname, nomeArquivo);
     if (fs.existsSync(caminho)) {
@@ -33,7 +32,7 @@ function carregarModuloSeguro(nomeArquivo) {
 }
 
 client.once('ready', async () => {
-    console.log('🧱 [BOT HELP] Central online rodando com Inteligência Artificial 100% Direta e Local!');
+    console.log('🧱 [BOT HELP] Central online focada 100% em Tickets, Administração e Anti-Scam!');
 
     const commands = [
         new SlashCommandBuilder().setName('painel-ticket').setDescription('Envia o painel esmero público de suporte da cidade.'),
@@ -53,31 +52,11 @@ client.once('ready', async () => {
     }
 });
 
-// 🚨 CENTRAL DE ESCUTA DIRETA DO CHAT
+// 🚨 CENTRAL DE ESCUTA DO CHAT PURIFICADA (SEM COMANDO !IA)
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
-    const txt = message.content.trim();
-
-    // 🎙️ COMANDO DIRETO: Correção de compatibilidade exata com o módulo ia_local.js
-    if (txt.toLowerCase().startsWith('!ia')) {
-        try {
-            const iaLocalModule = carregarModuloSeguro('ia_local.js');
-            // 🚨 FIX CIRÚRGICO: Agora testando e chamando as duas variações de letras para nunca dar erro!
-            if (iaLocalModule) {
-                if (typeof iaLocalModule.executarIAAutonoma === 'function') {
-                    await iaLocalModule.executarIAAutonoma(message);
-                } else if (typeof iaLocalModule.executarIaAutonoma === 'function') {
-                    await iaLocalModule.executarIaAutonoma(message);
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao processar comando da IA Local no index:', error);
-        }
-        return; // Trava o fluxo aqui para não disparar os escudos de spam abaixo à toa
-    }
-
-    // Escudo Anti-Raid e Anti-Troll (armadilha.js) em segundo plano
+    // Escudo Anti-Raid e Anti-Troll (armadilha.js) ativo em segundo plano
     try {
         const armadilhaModule = carregarModuloSeguro('armadilha.js');
         if (armadilhaModule && typeof armadilhaModule.verificarAmeacasArmadilha === 'function') {
