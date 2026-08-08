@@ -2,8 +2,6 @@ const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-// 🚨 CONSTRUTOR OFICIAL POR EXTENSO DO GOOGLE SDK:
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
@@ -20,20 +18,6 @@ const client = new Client({
     ]
 });
 
-// 🧠 Inicializa o motor com a propriedade GoogleGenerativeAI oficial de fábrica!
-let modeloGeminiMestre = null;
-try {
-    if (process.env.GEMINI_KEY) {
-        const ai = new GoogleGenerativeAI(process.env.GEMINI_KEY);
-        modeloGeminiMestre = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
-        console.log('🤖 [Google AI] Motor do Gemini instanciado com sucesso na raiz!');
-    } else {
-        console.log('⚠️ [Aviso] GEMINI_KEY não encontrada nas variáveis de ambiente.');
-    }
-} catch (error) {
-    console.error('❌ Erro ao instanciar o motor do Gemini no index.js:', error);
-}
-
 function carregarModuloSeguro(nomeArquivo) {
     const caminho = path.join(__dirname, nomeArquivo);
     if (fs.existsSync(caminho)) {
@@ -47,8 +31,9 @@ function carregarModuloSeguro(nomeArquivo) {
     return null;
 }
 
+// 🚀 REGISTRO AUTOMÁTICO DE COMANDOS BARRA (/) NA API DO DISCORD
 client.once('ready', async () => {
-    console.log(`🧱 [BOT HELP] ${client.user.tag} online com suporte a Slash Commands e IA integrados na raiz!`);
+    console.log(`🧱 [BOT HELP] ${client.user.tag} online com suporte a Slash Commands e IA unificados via HTTP!`);
 
     const commands = [
         new SlashCommandBuilder().setName('painel-ticket').setDescription('Envia o painel esmero público de suporte da cidade.'),
@@ -68,22 +53,23 @@ client.once('ready', async () => {
     }
 });
 
+// 🚨 ESCUTA DE CHAT (LEITOR DE PREFIXOS, ESCUDOS E COMANDO ALEXA !IA)
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
     const txt = message.content.trim();
 
-    // 🎙️ COMANDO !IA: Envia o modelo mestre já pré-carregado no index!
+    // 🎙️ COMANDO !IA: Envia a requisição direto para o cérebro no ajuda.js (que chama o google.js)
     if (txt.toLowerCase().startsWith('!ia')) {
         try {
             const ajudaModule = carregarModuloSeguro('ajuda.js');
             if (ajudaModule) {
-                await ajudaModule.executeComandoIA(message, modeloGeminiMestre);
+                await ajudaModule.executeComandoIA(message);
             }
         } catch (error) {
             console.error('Erro ao processar comando da Alexa Humana:', error);
         }
-        return;
+        return; // Trava o fluxo aqui para não disparar os escudos de spam abaixo à toa
     }
 
     // Escudo Anti-Raid e Anti-Troll (armadilha.js)
@@ -104,9 +90,13 @@ client.on('messageCreate', async message => {
     } catch (e) { }
 });
 
+// 🎯 DISTRIBUIDOR CENTRAL DE INTERAÇÕES (BARRA, BOTÕES E MODALS)
 client.on('interactionCreate', async interaction => {
+    
+    // A) SE FOR UM COMANDO DE BARRA ( / )
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
+
         if (commandName === 'painel-ticket') {
             try { const m = carregarModuloSeguro('ticket.js'); if (m) await m.executePrefixPainel(interaction); } catch (e) { console.error(e); }
             return;
@@ -125,12 +115,32 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
-    if (interaction.isButton() || interaction.isModalSubmit()) {
+    // B) SE FOR UM ENVIO DE MODAL POPUP (FORMULÁRIOS)
+    if (interaction.isModalSubmit()) {
+        if (interaction.customId === 'modal_gerador_embed') {
+            try {
+                const embedModule = carregarModuloSeguro('cria_embed.js');
+                if (embedModule) await embedModule.processarEnvioModalEmbed(interaction);
+            } catch (e) { console.error(e); }
+            return;
+        }
+        
+        try {
+            const ticketBotoesModule = carregarModuloSeguro('ticket_botoes.js');
+            if (ticketBotoesModule) await ticketBotoesModule.handleInteractions(interaction);
+        } catch (e) { console.error(e); }
+        return;
+    }
+
+    // C) SE FOR UM CLIQUE DE BOTÃO (TICKETS E ESTRELAS DA DM)
+    if (interaction.isButton()) {
         try {
             const ticketBotoesModule = carregarModuloSeguro('ticket_botoes.js');
             if (ticketBotoesModule) await ticketBotoesModule.handleInteractions(interaction);
         } catch (e) { console.error(e); }
     }
 });
+
+client.on('error', err => console.error('Erro global no cliente Discord:', err));
 
 client.login(process.env.DISCORD_TOKEN);
