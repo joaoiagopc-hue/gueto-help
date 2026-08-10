@@ -1,48 +1,51 @@
-const { PermissionFlagsBits, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    // 🎨 A) CONFIGURAÇÃO DO COMANDO: Abre a caixa de diálogo nativa do Discord no formato Parágrafo
+    // 🔒 Configuração nativa do Comando Barra (/) do Discord.js v14
     async executeSlashCriaEmbed(interaction) {
-        // Trava de segurança para apenas Administradores / Staff usarem o comando
-        if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
-            return interaction.reply({ content: '❌ Você não possui permissão para criar anúncios oficiais na cidade!', ephemeral: true });
+        // Trava de segurança: Garante que apenas administradores usem o comando
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return interaction.reply({ content: '❌ **Acesso Negado!** Apenas administradores podem utilizar este comando.', ephemeral: true });
         }
 
-        const modal = new ModalBuilder()
-            .setCustomId('modal_gerador_embed')
-            .setTitle('Criador de Embed Clean');
+        // Avisa no canal que o bot abriu o sensor de escuta por 2 minutos
+        await interaction.reply({ 
+            content: '🎙️ **Gerador de Embed:** Digite ou cole o texto completo da sua Embed no chat abaixo (pode usar parágrafos, quebras de linha e emojis). Eu tenho **2 minutos** para copiar!\n*⚠️ Esta instrução vai sumir automaticamente.*'
+        });
 
-        // 🚨 CAMPO DE PARÁGRAFO: Permite pular linhas e escrever textos gigantescos sem estourar limites!
-        const inputParagrafo = new TextInputBuilder()
-            .setCustomId('embed_descricao')
-            .setLabel('Texto da Embed (Suporta Parágrafos):') // Rótulo curto abaixo de 45 caracteres ok!
-            .setStyle(TextInputStyle.Paragraph) // Ativa o modo de digitação de parágrafo longo!
-            .setPlaceholder('Digite aqui o seu comunicado oficial. Você pode apertar Enter para pular linhas e estruturar seus parágrafos...')
-            .setRequired(true);
+        // Coletor de mensagens focado na conta do administrador que usou o comando barra
+        const filtro = m => m.author.id === interaction.user.id;
+        const coletor = interaction.channel.createMessageCollector({ filter: filtro, max: 1, time: 120000 });
 
-        modal.addComponents(new ActionRowBuilder().addComponents(inputParagrafo));
+        coletor.on('collect', async message => {
+            const textoDigitado = message.content;
 
-        // Exibe o popup estético na tela do Staff
-        await interaction.showModal(modal).catch(err => console.error("Erro ao abrir modal de parágrafo:", err));
-    },
+            // 🎨 MOLDAGEM COMPLETA DA EMBED PÚBLICA (Puxa os parágrafos livres idênticos)
+            const embedCustomizada = new EmbedBuilder()
+                .setTitle('🧱 COMUNICADO OFICIAL — GUETO RP')
+                .setDescription(textoDigitado) // Copia o parágrafo bruto formatado do chat
+                .setColor('#2f3136')
+                .setTimestamp()
+                .setFooter({ text: 'Administração Gueto RP — Gestão Civil' });
 
-    // 📬 B) COMPILA O FORMULÁRIO ENVIADO E ATIRA A EMBED CLEAN NA SALA
-    async processarEnvioModalEmbed(interaction) {
-        // Segura a resposta da API imediatamente para evitar o erro de "aplicativo não respondeu"
-        await interaction.deferReply({ ephemeral: true });
+            try {
+                // 🟥 PASSO A: Apaga a mensagem digitada pelo admin para não poluir o chat
+                await message.delete().catch(() => null);
 
-        // Extrai o texto inteiro digitado, respeitando todas as quebras de linha e enters
-        const textoParagrafo = interaction.fields.getTextInputValue('embed_descricao');
+                // 🟥 PASSO B: Apaga a instrução amarela inicial do bot
+                await interaction.deleteReply().catch(() => null);
 
-        // Monta o design com o corpo do texto e a cor limpa clean padrão do Gueto
-        const embedClean = new EmbedBuilder()
-            .setDescription(textoParagrafo)
-            .setColor('#2f3136'); 
+                // 🟩 PASSO C: Dispara a Embed final magnífica no canal público
+                await interaction.channel.send({ embeds: [embedCustomizada] });
+            } catch (error) {
+                console.error('Erro ao processar limpeza de mensagens da Embed:', error);
+            }
+        });
 
-        // Posta de forma solta no canal de texto onde o comando foi usado
-        await interaction.channel.send({ embeds: [embedClean] }).catch(err => console.error(err));
-        
-        // Finaliza a interação avisando apenas ao Staff que o anúncio foi criado
-        await interaction.editReply({ content: '✅ Embed com parágrafos gerada e enviada com sucesso!' });
+        coletor.on('end', (collected, reason) => {
+            if (reason === 'time') {
+                interaction.editReply({ content: '⏰ **Tempo Esgotado!** Você demorou mais de 2 minutos para enviar o texto e o gerador foi cancelado.', ephemeral: true }).catch(() => null);
+            }
+        });
     }
 };
