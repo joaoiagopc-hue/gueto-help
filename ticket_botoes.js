@@ -13,28 +13,35 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-// Caminhos dos bancos de dados locais da cidade na raiz
-const rankingPath = path.join(__dirname, 'usuarios_ranking.json');
-const ticketsPath = path.join(__dirname, 'usuarios_tickets.json');
+// Caminhos dos bancos de dados
+const rankingPath = path.join(__dirname, '../../usuarios_ranking.json');
+const ticketsPath = path.join(__dirname, '../../usuarios_tickets.json');
 
-/**
- * 📊 SISTEMA DE AVALIAÇÃO DE ESTRELAS
- * Calcula a média e armazena no histórico JSON
- */
+// =========================================================
+// 📊 SISTEMA DE AVALIAÇÃO
+// =========================================================
+
 function salvarNotaStaff(staffId, estrelas) {
     if (!fs.existsSync(rankingPath)) {
-        fs.writeFileSync(rankingPath, JSON.stringify([], null, 2));
+        fs.writeFileSync(
+            rankingPath,
+            JSON.stringify([], null, 2)
+        );
     }
 
     let dados = [];
 
     try {
-        dados = JSON.parse(fs.readFileSync(rankingPath, 'utf8'));
+        dados = JSON.parse(
+            fs.readFileSync(rankingPath, 'utf8')
+        );
     } catch (e) {
         dados = [];
     }
 
-    let staff = dados.find(s => s.id === staffId);
+    let staff = dados.find(
+        s => s.id === staffId
+    );
 
     if (!staff) {
         staff = {
@@ -49,13 +56,17 @@ function salvarNotaStaff(staffId, estrelas) {
 
     staff.notas.push(estrelas);
 
-    staff.totalEstrelas = staff.notas.reduce(
-        (a, b) => a + b,
-        0
-    );
+    staff.totalEstrelas =
+        staff.notas.reduce(
+            (a, b) => a + b,
+            0
+        );
 
     staff.media = parseFloat(
-        (staff.totalEstrelas / staff.notas.length).toFixed(1)
+        (
+            staff.totalEstrelas /
+            staff.notas.length
+        ).toFixed(1)
     );
 
     fs.writeFileSync(
@@ -66,9 +77,12 @@ function salvarNotaStaff(staffId, estrelas) {
     return staff;
 }
 
+// =========================================================
+// 📦 EXPORTAÇÃO
+// =========================================================
+
 module.exports = {
 
-    // 🚨 EXPORTAÇÃO DUPLA DE SEGURANÇA
     handleInteraction: async function (interaction) {
         return await module.exports.processarTudo(interaction);
     },
@@ -79,32 +93,33 @@ module.exports = {
 
     async processarTudo(interaction) {
 
-        // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-        // ⚙️ CONFIGURAÇÕES DO DISCORD
-        // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+        // =====================================================
+        // ⚙️ CONFIGURAÇÕES
+        // =====================================================
 
         const CATEGORIA_TICKET_ID = '1515730442714611832';
         const CARGO_STAFF_ID = '1515730228528418956';
         const CANAL_LOGS_TICKETS = '1530263063436202024';
         const CANAL_AVALIACOES_PUB = '1532848984358518916';
 
-        // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
-
         if (!interaction.client.staffTickets) {
             interaction.client.staffTickets = new Map();
         }
 
-        // =========================================================
-        // 🎫 A) TRATAMENTO DE BOTÕES
-        // =========================================================
+        // =====================================================
+        // 🎫 BOTÕES
+        // =====================================================
 
         if (interaction.isButton()) {
 
-            // =====================================================
-            // 1. ABERTURA DE TICKET
-            // =====================================================
+            // =================================================
+            // 🎫 ABRIR TICKET
+            // =================================================
 
-            if (interaction.customId === 'abrir_ticket_suporte') {
+            if (
+                interaction.customId ===
+                'abrir_ticket_suporte'
+            ) {
 
                 if (!fs.existsSync(ticketsPath)) {
                     fs.writeFileSync(
@@ -117,7 +132,10 @@ module.exports = {
 
                 try {
                     tDados = JSON.parse(
-                        fs.readFileSync(ticketsPath, 'utf8')
+                        fs.readFileSync(
+                            ticketsPath,
+                            'utf8'
+                        )
                     );
                 } catch (e) {
                     tDados = [];
@@ -147,20 +165,29 @@ module.exports = {
 
                     const canal =
                         await interaction.guild.channels.create({
-                            name: `suporte-${interaction.user.username}`,
+                            name:
+                                `suporte-${interaction.user.username}`,
+
                             type: 0,
-                            parent: CATEGORIA_TICKET_ID,
+
+                            parent:
+                                CATEGORIA_TICKET_ID,
 
                             permissionOverwrites: [
+
                                 {
-                                    id: interaction.guild.id,
+                                    id:
+                                        interaction.guild.id,
+
                                     deny: [
                                         PermissionFlagsBits.ViewChannel
                                     ]
                                 },
 
                                 {
-                                    id: interaction.user.id,
+                                    id:
+                                        interaction.user.id,
+
                                     allow: [
                                         PermissionFlagsBits.ViewChannel,
                                         PermissionFlagsBits.SendMessages,
@@ -169,7 +196,9 @@ module.exports = {
                                 },
 
                                 {
-                                    id: CARGO_STAFF_ID,
+                                    id:
+                                        CARGO_STAFF_ID,
+
                                     allow: [
                                         PermissionFlagsBits.ViewChannel,
                                         PermissionFlagsBits.SendMessages,
@@ -188,7 +217,11 @@ module.exports = {
 
                     fs.writeFileSync(
                         ticketsPath,
-                        JSON.stringify(tDados, null, 2)
+                        JSON.stringify(
+                            tDados,
+                            null,
+                            2
+                        )
                     );
 
                     const embedBoasVindas =
@@ -205,29 +238,52 @@ module.exports = {
                             .setColor('#2f3136');
 
                     const linhaBotoes =
-                        new ActionRowBuilder().addComponents(
+                        new ActionRowBuilder()
+                            .addComponents(
 
-                            new ButtonBuilder()
-                                .setCustomId('assumir_ticket_suporte')
-                                .setLabel('🟢 Atender')
-                                .setStyle(ButtonStyle.Success),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        'assumir_ticket_suporte'
+                                    )
+                                    .setLabel(
+                                        '🟢 Atender'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Success
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId('btn_trocar_atendente')
-                                .setLabel('🔄 Transferir')
-                                .setStyle(ButtonStyle.Secondary),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        'btn_trocar_atendente'
+                                    )
+                                    .setLabel(
+                                        '🔄 Transferir'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Secondary
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId('gatilho_fechar_ticket')
-                                .setLabel('🔒 Fechar')
-                                .setStyle(ButtonStyle.Danger)
-                        );
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        'gatilho_fechar_ticket'
+                                    )
+                                    .setLabel(
+                                        '🔒 Fechar'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Danger
+                                    )
+                            );
 
                     await canal.send({
                         content:
                             `${interaction.user} | <@&${CARGO_STAFF_ID}>`,
-                        embeds: [embedBoasVindas],
-                        components: [linhaBotoes]
+                        embeds: [
+                            embedBoasVindas
+                        ],
+                        components: [
+                            linhaBotoes
+                        ]
                     });
 
                     return interaction.editReply({
@@ -246,14 +302,19 @@ module.exports = {
                 }
             }
 
-            // =====================================================
-            // 2. ASSUMIR CHAMADO
-            // =====================================================
+            // =================================================
+            // 🟢 ASSUMIR TICKET
+            // =================================================
 
-            if (interaction.customId === 'assumir_ticket_suporte') {
+            if (
+                interaction.customId ===
+                'assumir_ticket_suporte'
+            ) {
 
                 if (
-                    !interaction.member.roles.cache.has(CARGO_STAFF_ID) &&
+                    !interaction.member.roles.cache.has(
+                        CARGO_STAFF_ID
+                    ) &&
                     !interaction.member.permissions.has(
                         PermissionFlagsBits.ManageChannels
                     )
@@ -268,10 +329,16 @@ module.exports = {
                 let tDados;
 
                 try {
+
                     tDados = JSON.parse(
-                        fs.readFileSync(ticketsPath, 'utf8')
+                        fs.readFileSync(
+                            ticketsPath,
+                            'utf8'
+                        )
                     );
+
                 } catch (e) {
+
                     return interaction.reply({
                         content:
                             '❌ Não foi possível carregar os tickets.',
@@ -279,11 +346,13 @@ module.exports = {
                     });
                 }
 
-                let ticket = tDados.find(
-                    t =>
-                        t.canalId === interaction.channel.id &&
-                        t.status === 'ABERTO'
-                );
+                const ticket =
+                    tDados.find(
+                        t =>
+                            t.canalId ===
+                                interaction.channel.id &&
+                            t.status === 'ABERTO'
+                    );
 
                 if (!ticket) {
                     return interaction.reply({
@@ -301,52 +370,69 @@ module.exports = {
                     });
                 }
 
-                ticket.staffId = interaction.user.id;
+                ticket.staffId =
+                    interaction.user.id;
 
                 fs.writeFileSync(
                     ticketsPath,
-                    JSON.stringify(tDados, null, 2)
+                    JSON.stringify(
+                        tDados,
+                        null,
+                        2
+                    )
                 );
 
                 try {
 
-                    await interaction.channel.permissionOverwrites.set([
-                        {
-                            id: interaction.guild.id,
-                            deny: [
-                                PermissionFlagsBits.ViewChannel
-                            ]
-                        },
+                    await interaction.channel
+                        .permissionOverwrites
+                        .set([
 
-                        {
-                            id: ticket.moradorId,
-                            allow: [
-                                PermissionFlagsBits.ViewChannel,
-                                PermissionFlagsBits.SendMessages,
-                                PermissionFlagsBits.ReadMessageHistory
-                            ]
-                        },
+                            {
+                                id:
+                                    interaction.guild.id,
 
-                        {
-                            id: interaction.user.id,
-                            allow: [
-                                PermissionFlagsBits.ViewChannel,
-                                PermissionFlagsBits.SendMessages,
-                                PermissionFlagsBits.ReadMessageHistory
-                            ]
-                        },
+                                deny: [
+                                    PermissionFlagsBits.ViewChannel
+                                ]
+                            },
 
-                        {
-                            id: CARGO_STAFF_ID,
-                            allow: [
-                                PermissionFlagsBits.ViewChannel,
-                                PermissionFlagsBits.ReadMessageHistory
-                            ],
-                            deny: [
-                                PermissionFlagsBits.SendMessages
-                            ]
-                        }
-                    ]);
+                            {
+                                id:
+                                    ticket.moradorId,
+
+                                allow: [
+                                    PermissionFlagsBits.ViewChannel,
+                                    PermissionFlagsBits.SendMessages,
+                                    PermissionFlagsBits.ReadMessageHistory
+                                ]
+                            },
+
+                            {
+                                id:
+                                    interaction.user.id,
+
+                                allow: [
+                                    PermissionFlagsBits.ViewChannel,
+                                    PermissionFlagsBits.SendMessages,
+                                    PermissionFlagsBits.ReadMessageHistory
+                                ]
+                            },
+
+                            {
+                                id:
+                                    CARGO_STAFF_ID,
+
+                                allow: [
+                                    PermissionFlagsBits.ViewChannel,
+                                    PermissionFlagsBits.ReadMessageHistory
+                                ],
+
+                                deny: [
+                                    PermissionFlagsBits.SendMessages
+                                ]
+                            }
+                        ]);
 
                 } catch (e) {
                     console.error(e);
@@ -358,14 +444,19 @@ module.exports = {
                 });
             }
 
-            // =====================================================
-            // 3. FECHAR TICKET / ABRIR MODAL
-            // =====================================================
+            // =================================================
+            // 🔒 FECHAR TICKET
+            // =================================================
 
-            if (interaction.customId === 'gatilho_fechar_ticket') {
+            if (
+                interaction.customId ===
+                'gatilho_fechar_ticket'
+            ) {
 
                 if (
-                    !interaction.member.roles.cache.has(CARGO_STAFF_ID) &&
+                    !interaction.member.roles.cache.has(
+                        CARGO_STAFF_ID
+                    ) &&
                     !interaction.member.permissions.has(
                         PermissionFlagsBits.ManageChannels
                     )
@@ -379,38 +470,54 @@ module.exports = {
 
                 const modalFechar =
                     new ModalBuilder()
-                        .setCustomId('modal_fechar_ticket_motivo')
-                        .setTitle('🔒 Encerramento de Atendimento');
+                        .setCustomId(
+                            'modal_fechar_ticket_motivo'
+                        )
+                        .setTitle(
+                            '🔒 Encerramento de Atendimento'
+                        );
 
                 const campoMotivo =
                     new TextInputBuilder()
-                        .setCustomId('campo_motivo_texto')
+                        .setCustomId(
+                            'campo_motivo_texto'
+                        )
                         .setLabel(
                             'Qual o motivo do fechamento deste chamado?'
                         )
-                        .setStyle(TextInputStyle.Paragraph)
+                        .setStyle(
+                            TextInputStyle.Paragraph
+                        )
                         .setPlaceholder(
-                            'Ex: Dúvida tirada in-game / Ação de denúncia resolvida e punição aplicada.'
+                            'Ex: Dúvida tirada in-game / Ação de denúncia resolvida.'
                         )
                         .setRequired(true);
 
                 modalFechar.addComponents(
-                    new ActionRowBuilder().addComponents(
-                        campoMotivo
-                    )
+                    new ActionRowBuilder()
+                        .addComponents(
+                            campoMotivo
+                        )
                 );
 
-                return interaction.showModal(modalFechar);
+                return interaction.showModal(
+                    modalFechar
+                );
             }
 
-            // =====================================================
-            // 4. TROCAR ATENDENTE
-            // =====================================================
+            // =================================================
+            // 🔄 TRANSFERIR ATENDENTE
+            // =================================================
 
-            if (interaction.customId === 'btn_trocar_atendente') {
+            if (
+                interaction.customId ===
+                'btn_trocar_atendente'
+            ) {
 
                 if (
-                    !interaction.member.roles.cache.has(CARGO_STAFF_ID) &&
+                    !interaction.member.roles.cache.has(
+                        CARGO_STAFF_ID
+                    ) &&
                     !interaction.member.permissions.has(
                         PermissionFlagsBits.ManageChannels
                     )
@@ -424,7 +531,9 @@ module.exports = {
 
                 const menuSelecaoStaff =
                     new UserSelectMenuBuilder()
-                        .setCustomId('menu_transferir_atendente')
+                        .setCustomId(
+                            'menu_transferir_atendente'
+                        )
                         .setPlaceholder(
                             '👋 Selecione o novo membro da Staff para assumir o caso...'
                         )
@@ -434,32 +543,58 @@ module.exports = {
                 return interaction.reply({
                     content:
                         '🔄 **Escala de Turno:** Escolha qual administrador do menu vai assumir este chamado a partir de agora:',
+
                     components: [
-                        new ActionRowBuilder().addComponents(
-                            menuSelecaoStaff
-                        )
+                        new ActionRowBuilder()
+                            .addComponents(
+                                menuSelecaoStaff
+                            )
                     ],
+
                     ephemeral: true
                 });
             }
 
-            // =====================================================
-            // 5. PROCESSAMENTO DAS ESTRELAS DA AVALIAÇÃO
-            // =====================================================
+            // =================================================
+            // ⭐ AVALIAÇÃO
+            // =================================================
 
-            if (interaction.customId.startsWith('nota_')) {
+            if (
+                interaction.customId.startsWith(
+                    'nota_'
+                )
+            ) {
 
                 const partes =
                     interaction.customId.split('_');
 
                 const nota =
-                    parseInt(partes[1], 10);
+                    parseInt(
+                        partes[1],
+                        10
+                    );
 
                 const staffId =
                     partes[2];
 
+                if (
+                    isNaN(nota) ||
+                    nota < 1 ||
+                    nota > 5 ||
+                    !staffId
+                ) {
+                    return interaction.reply({
+                        content:
+                            '❌ Avaliação inválida.',
+                        ephemeral: true
+                    });
+                }
+
                 const dadosAtualizados =
-                    salvarNotaStaff(staffId, nota);
+                    salvarNotaStaff(
+                        staffId,
+                        nota
+                    );
 
                 await interaction.update({
                     content:
@@ -485,30 +620,44 @@ module.exports = {
                             .addFields(
 
                                 {
-                                    name: '👮 Staff Avaliado',
-                                    value: `<@${staffId}>`,
+                                    name:
+                                        '👮 Staff Avaliado',
+
+                                    value:
+                                        `<@${staffId}>`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '📊 Nota Recebida',
+                                    name:
+                                        '📊 Nota Recebida',
+
                                     value:
                                         `${'⭐'.repeat(nota)} (${nota}/5)`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '📈 Nova Média Geral',
+                                    name:
+                                        '📈 Nova Média Geral',
+
                                     value:
                                         `⭐ ${dadosAtualizados.media} (Total de ${dadosAtualizados.notas.length} votos)`,
+
                                     inline: false
                                 }
                             )
-                            .setColor('#00ff00')
+                            .setColor(
+                                '#00ff00'
+                            )
                             .setTimestamp();
 
                     await cAvaliacao.send({
-                        embeds: [embedPub]
+                        embeds: [
+                            embedPub
+                        ]
                     });
 
                 } catch (e) {
@@ -519,11 +668,13 @@ module.exports = {
             }
         }
 
-        // =========================================================
-        // 🎫 B) ENVIO DO FORMULÁRIO POPUP
-        // =========================================================
+        // =====================================================
+        // 📝 MODAL DE FECHAMENTO
+        // =====================================================
 
-        if (interaction.isModalSubmit()) {
+        if (
+            interaction.isModalSubmit()
+        ) {
 
             if (
                 interaction.customId ===
@@ -558,11 +709,14 @@ module.exports = {
                 const ticketIndex =
                     tDados.findIndex(
                         t =>
-                            t.canalId === interaction.channel.id &&
+                            t.canalId ===
+                                interaction.channel.id &&
                             t.status === 'ABERTO'
                     );
 
-                if (ticketIndex === -1) {
+                if (
+                    ticketIndex === -1
+                ) {
                     return interaction.reply({
                         content:
                             '❌ Ticket já arquivado.',
@@ -570,14 +724,19 @@ module.exports = {
                     });
                 }
 
-                let ticket =
+                const ticket =
                     tDados[ticketIndex];
 
-                ticket.status = 'FECHADO';
+                ticket.status =
+                    'FECHADO';
 
                 fs.writeFileSync(
                     ticketsPath,
-                    JSON.stringify(tDados, null, 2)
+                    JSON.stringify(
+                        tDados,
+                        null,
+                        2
+                    )
                 );
 
                 const moradorId =
@@ -586,9 +745,9 @@ module.exports = {
                 const staffId =
                     interaction.user.id;
 
-                // =================================================
-                // 📩 ENVIA AVALIAÇÃO NA DM DO MORADOR
-                // =================================================
+                // =============================================
+                // 📩 AVALIAÇÃO NA DM
+                // =============================================
 
                 try {
 
@@ -603,65 +762,93 @@ module.exports = {
                                 '🧱 AVALIE O ATENDIMENTO — GUETO RP'
                             )
                             .setDescription(
-                                `Olá! O seu chamado de suporte foi finalizado com esmero pelo administrador <@${staffId}>!\n\n` +
+                                `Olá! O seu chamado de suporte foi finalizado pelo administrador <@${staffId}>!\n\n` +
                                 `Por favor, vote clicando nas estrelas abaixo para avaliar a qualidade do suporte recebido:`
                             )
-                            .setColor('#ffaa00');
+                            .setColor(
+                                '#ffaa00'
+                            );
 
-                    const linhaEstrelas =
-                        new ActionRowBuilder().addComponents(
+                    const AppEstrelas =
+                        new ActionRowBuilder()
+                            .addComponents(
 
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    `nota_1_${staffId}`
-                                )
-                                .setLabel('⭐ 1')
-                                .setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        `nota_1_${staffId}`
+                                    )
+                                    .setLabel(
+                                        '⭐ 1'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Primary
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    `nota_2_${staffId}`
-                                )
-                                .setLabel('⭐⭐ 2')
-                                .setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        `nota_2_${staffId}`
+                                    )
+                                    .setLabel(
+                                        '⭐⭐ 2'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Primary
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    `nota_3_${staffId}`
-                                )
-                                .setLabel('⭐⭐⭐ 3')
-                                .setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        `nota_3_${staffId}`
+                                    )
+                                    .setLabel(
+                                        '⭐⭐⭐ 3'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Primary
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    `nota_4_${staffId}`
-                                )
-                                .setLabel('⭐⭐⭐⭐ 4')
-                                .setStyle(ButtonStyle.Primary),
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        `nota_4_${staffId}`
+                                    )
+                                    .setLabel(
+                                        '⭐⭐⭐⭐ 4'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Primary
+                                    ),
 
-                            new ButtonBuilder()
-                                .setCustomId(
-                                    `nota_5_${staffId}`
-                                )
-                                .setLabel('⭐⭐⭐⭐⭐ 5')
-                                .setStyle(ButtonStyle.Primary)
-                        );
+                                new ButtonBuilder()
+                                    .setCustomId(
+                                        `nota_5_${staffId}`
+                                    )
+                                    .setLabel(
+                                        '⭐⭐⭐⭐⭐ 5'
+                                    )
+                                    .setStyle(
+                                        ButtonStyle.Primary
+                                    )
+                            );
 
                     await moradorDM.send({
-                        embeds: [embedDM],
-                        components: [linhaEstrelas]
+                        embeds: [
+                            embedDM
+                        ],
+
+                        components: [
+                            AppEstrelas
+                        ]
                     });
 
                 } catch (e) {
                     console.error(
-                        'Não foi possível enviar a avaliação por DM:',
+                        'Erro ao enviar avaliação:',
                         e
                     );
                 }
 
-                // =================================================
-                // 📋 LOG DO TICKET
-                // =================================================
+                // =============================================
+                // 📋 LOG
+                // =============================================
 
                 try {
 
@@ -678,43 +865,59 @@ module.exports = {
                             .addFields(
 
                                 {
-                                    name: '👤 Morador Atendido',
+                                    name:
+                                        '👤 Morador Atendido',
+
                                     value:
                                         `<@${moradorId}>`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '👮 Staff Responsável',
+                                    name:
+                                        '👮 Staff Responsável',
+
                                     value:
                                         `<@${staffId}>`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '📂 Canal Deletado',
+                                    name:
+                                        '📂 Canal Deletado',
+
                                     value:
                                         `#${interaction.channel.name}`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '📝 Motivo do Encerramento',
+                                    name:
+                                        '📝 Motivo do Encerramento',
+
                                     value:
                                         `\`\`\`text\n${motivoFechamento}\n\`\`\``,
+
                                     inline: false
                                 }
                             )
-                            .setColor('#ff0000')
+                            .setColor(
+                                '#ff0000'
+                            )
                             .setTimestamp();
 
                     await cLogs.send({
-                        embeds: [embedLog]
+                        embeds: [
+                            embedLog
+                        ]
                     });
 
                 } catch (e) {
                     console.error(
-                        'Erro ao enviar log do ticket:',
+                        'Erro ao enviar log:',
                         e
                     );
                 }
@@ -725,27 +928,32 @@ module.exports = {
                 });
 
                 setTimeout(() => {
+
                     interaction.channel
                         .delete()
-                        .catch(() => null);
+                        .catch(
+                            () => null
+                        );
+
                 }, 5000);
 
                 return;
             }
         }
 
-        // =========================================================
-        // 🎫 C) MENU DE SELEÇÃO — TRANSFERIR ATENDENTE
-        // =========================================================
+        // =====================================================
+        // 🔄 MENU DE TRANSFERÊNCIA
+        // =====================================================
 
-        if (interaction.isUserSelectMenu()) {
+        if (
+            interaction.isUserSelectMenu()
+        ) {
 
             if (
                 interaction.customId ===
                 'menu_transferir_atendente'
             ) {
 
-                // Extrai o primeiro ID selecionado
                 const novoAtendenteId =
                     interaction.values[0];
 
@@ -756,6 +964,7 @@ module.exports = {
                     novoAtendenteId ===
                     atendenteAntigoId
                 ) {
+
                     return interaction.reply({
                         content:
                             '⚠️ Você já é o responsável ativo por esta sala! Escolha outro administrador.',
@@ -763,7 +972,11 @@ module.exports = {
                     });
                 }
 
-                await interaction.deferUpdate();
+                await interaction
+                    .deferUpdate()
+                    .catch(
+                        () => null
+                    );
 
                 try {
 
@@ -775,7 +988,7 @@ module.exports = {
                             )
                         );
 
-                    let ticket =
+                    const ticket =
                         tDados.find(
                             t =>
                                 t.canalId ===
@@ -801,25 +1014,27 @@ module.exports = {
                     const canalSuporte =
                         interaction.channel;
 
-                    // Remove permissão de envio do atendente antigo
-                    await canalSuporte.permissionOverwrites.create(
-                        atendenteAntigoId,
-                        {
-                            ViewChannel: true,
-                            SendMessages: false,
-                            ReadMessageHistory: true
-                        }
-                    );
+                    await canalSuporte
+                        .permissionOverwrites
+                        .create(
+                            atendenteAntigoId,
+                            {
+                                ViewChannel: true,
+                                SendMessages: false,
+                                ReadMessageHistory: true
+                            }
+                        );
 
-                    // Dá permissão para o novo atendente
-                    await canalSuporte.permissionOverwrites.create(
-                        novoAtendenteId,
-                        {
-                            ViewChannel: true,
-                            SendMessages: true,
-                            ReadMessageHistory: true
-                        }
-                    );
+                    await canalSuporte
+                        .permissionOverwrites
+                        .create(
+                            novoAtendenteId,
+                            {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                ReadMessageHistory: true
+                            }
+                        );
 
                     const embedTrocaTurno =
                         new EmbedBuilder()
@@ -829,32 +1044,43 @@ module.exports = {
                             .addFields(
 
                                 {
-                                    name: '⬅️ Saindo do Turno',
+                                    name:
+                                        '⬅️ Saindo do Turno',
+
                                     value:
                                         `<@${atendenteAntigoId}>`,
+
                                     inline: true
                                 },
 
                                 {
-                                    name: '➡️ Assumindo o Caso',
+                                    name:
+                                        '➡️ Assumindo o Caso',
+
                                     value:
                                         `<@${novoAtendenteId}>`,
+
                                     inline: true
                                 }
                             )
-                            .setColor('#ffaa00')
+                            .setColor(
+                                '#ffaa00'
+                            )
                             .setTimestamp();
 
                     await canalSuporte.send({
                         content:
                             `🔔 <@${novoAtendenteId}>, você foi escalado para assumir este atendimento!`,
-                        embeds: [embedTrocaTurno]
+
+                        embeds: [
+                            embedTrocaTurno
+                        ]
                     });
 
                 } catch (error) {
 
                     console.error(
-                        'Erro ao transferir cargos via permissões:',
+                        'Erro ao transferir atendente:',
                         error
                     );
                 }
